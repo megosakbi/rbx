@@ -1,4 +1,3 @@
 {
-  "functions": { "api/a.js": { "includeFiles": "public/a.txt" } },
   "rewrites": [{ "source": "/a", "destination": "/api/a" }]
 }
