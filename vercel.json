@@ -1,7 +1,8 @@
 {
-  "rewrites": [{ "source": "/f", "destination": "/p.txt" }],
-  "headers": [{
-    "source": "/(.*)",
-    "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
-  }]
+  "cleanUrls": false,
+  "headers": [
+    { "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }] },
+    { "source": "/s.txt", "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }] },
+    { "source": "/p.hta", "headers": [{ "key": "Content-Type", "value": "application/octet-stream" }] }
+  ]
 }
