@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/a", "destination": "/api/a" }]
+  "rewrites": [
+    { "source": "/a", "destination": "/api/a" },
+    { "source": "/h.hta", "destination": "/api/h" }
+  ]
 }
